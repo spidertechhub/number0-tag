@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FieldDesk — Agent Portal</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --surface: #121216;
+      --surface-2: #18181d;
+      --border: #26262e;
+      --border-hover: #383844;
+      --orange: #ff6b00;
+      --orange-hover: #ff7f1f;
+      --orange-dim: rgba(255, 107, 0, 0.14);
+      --orange-border: rgba(255, 107, 0, 0.38);
+      --text: #f4f4f5;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --green: #22c55e;
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.14);
+      --radius: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Top Header */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--orange);
+      color: #000;
+      display: grid;
+      place-items: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+
+    .dot.live { background: var(--green); box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); }
+    .dot.error { background: var(--red); }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title i {
+      color: var(--orange);
+    }
+
+    /* Config Banner */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+      border: 1px solid var(--orange-border);
+      background: var(--orange-dim);
+      color: #ffd8bd;
+    }
+
+    .alert.error {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: var(--red-dim);
+      color: #fecaca;
+    }
+
+    .alert.success {
+      border-color: rgba(34, 197, 94, 0.4);
+      background: rgba(34, 197, 94, 0.12);
+      color: #bbf7d0;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrap > i {
+      position: absolute;
+      left: 13px;
+      color: var(--text-dim);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 16px; /* Prevents iOS auto-zoom */
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .input-wrap input {
+      padding-left: 38px;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px var(--orange-dim);
+    }
+
+    /* Photo Dropzone */
+    .photo-picker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px dashed var(--border-hover);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.92rem;
+      font-weight: 600;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      min-height: 52px;
+    }
+
+    .photo-picker:hover {
+      border-color: var(--orange);
+      color: var(--text);
+      background: rgba(255, 107, 0, 0.05);
+    }
+
+    .photo-picker i {
+      color: var(--orange);
+      font-size: 1.2rem;
+    }
+
+    .photo-preview-box {
+      margin-top: 10px;
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      gap: 12px;
+    }
+
+    .photo-preview-box img {
+      width: 68px;
+      height: 68px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .photo-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .photo-name {
+      font-size: 0.86rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .photo-size {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      font-family: inherit;
+      font-size: 0.94rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, opacity 0.15s, transform 0.08s;
+      text-decoration: none;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: var(--orange);
+      color: #000;
+      width: 100%;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--orange-hover);
+    }
+
+    .btn-ghost {
+      background: var(--surface-2);
+      color: var(--text);
+      border-color: var(--border);
+      min-height: 36px;
+      padding: 6px 12px;
+      font-size: 0.84rem;
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      border-color: var(--border-hover);
+    }
+
+    .btn-danger-ghost {
+      background: var(--red-dim);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+      min-height: 36px;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+    }
+
+    /* Agent Badge */
+    .agent-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--orange-dim);
+      border: 1px solid var(--orange-border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .agent-identity {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .agent-identity i {
+      color: var(--orange);
+      font-size: 1.15rem;
+    }
+
+    /* Recent Submissions List */
+    .entry-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .entry-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .entry-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .entry-phone {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+      color: var(--orange);
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .entry-comment {
+      font-size: 0.9rem;
+      color: var(--text);
+      margin-top: 4px;
+      word-break: break-word;
+    }
+
+    .entry-time {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    .entry-thumb {
+      width: 58px;
+      height: 58px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 28px 16px;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+
+    .empty-state i {
+      font-size: 1.8rem;
+      display: block;
+      margin-bottom: 8px;
+      color: var(--border-hover);
+    }
+
+    .hidden { display: none !important; }
+
+    .spin {
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 12px; }
+      .card { padding: 16px; }
+      .topbar { padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon"><i class="bi bi-headset"></i></div>
+        <span>FieldDesk</span>
+      </div>
+      <div class="topbar-right">
+        <span class="status-pill" id="realtimePill">
+          <span class="dot" id="realtimeDot"></span>
+          <span id="realtimeText">Connecting</span>
+        </span>
+        <a href="admin.html" class="btn btn-ghost" title="Open Admin Panel">
+          <i class="bi bi-shield-lock"></i> Admin
+        </a>
+      </div>
+    </header>
+
+    <div id="configAlert" class="alert hidden">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <div>
+        <strong>Supabase not configured.</strong> Set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> in the script at the bottom of <code>index.html</code>.
+      </div>
+    </div>
+
+    <div id="globalMessage" class="alert hidden"></div>
+
+    <!-- LOGIN VIEW -->
+    <section id="loginSection" class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="bi bi-person-badge"></i> Agent Sign In
+        </div>
+      </div>
+      <form id="loginForm" novalidate>
+        <div class="form-group">
+          <label for="agentNameInput">Agent Name</label>
+          <div class="input-wrap">
+            <i class="bi bi-person"></i>
+            <input
+              type="text"
+              id="agentNameInput"
+              placeholder="Enter your assigned agent name"
+              autocomplete="username"
+              required
+            />
+          </div>
+        </div>
+        <button type="submit" id="loginBtn" class="btn btn-primary">
+          <i class="bi bi-box-arrow-in-right"></i> Sign In
+        </button>
+      </form>
+    </section>
+
+    <!-- LOGGED-IN AGENT VIEW -->
+    <section id="workspaceSection" class="hidden">
+      <div class="agent-bar">
+        <div class="agent-identity">
+          <i class="bi bi-person-check-fill"></i>
+          <span>Logged in as <span id="activeAgentName"></span></span>
+        </div>
+        <button type="button" id="logoutBtn" class="btn btn-ghost">
+          <i class="bi bi-box-arrow-left"></i> Sign Out
+        </button>
+      </div>
+
+      <!-- SUBMISSION FORM -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="bi bi-plus-square"></i> New Entry
+          </div>
+        </div>
+
+        <form id="submissionForm" novalidate>
+          <div class="form-group">
+            <label for="phoneInput">Phone Number</label>
+            <div class="input-wrap">
+              <i class="bi bi-telephone"></i>
+              <input
+                type="tel"
+                id="phoneInput"
+                placeholder="e.g. +91 98765 43210"
+                autocomplete="tel"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="commentsInput">Comments</label>
+            <textarea
+              id="commentsInput"
+              placeholder="Enter call notes, status, or follow-up details..."
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Photograph Attachment (Optional)</label>
+            <input
+              type="file"
+              id="photoInput"
+              accept="image/*"
+              capture="environment"
+              class="hidden"
+            />
+            <label for="photoInput" class="photo-picker" id="photoPickerLabel">
+              <i class="bi bi-camera"></i>
+              <span>Tap to capture or attach a photo</span>
+            </label>
+
+            <div id="photoPreviewBox" class="photo-preview-box hidden">
+              <img id="photoPreviewImg" alt="Attachment preview" />
+              <div class="photo-meta">
+                <div class="photo-name" id="photoFileName"></div>
+                <div class="photo-size" id="photoFileSize"></div>
+              </div>
+              <button type="button" id="removePhotoBtn" class="btn btn-danger-ghost" title="Remove photo">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" id="submitEntryBtn" class="btn btn-primary">
+            <i class="bi bi-send-fill"></i> Submit Entry
+          </button>
+        </form>
+      </div>
+
+      <!-- AGENT RECENT SUBMISSIONS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="bi bi-clock-history"></i> Your Recent Entries
+          </div>
+          <span class="status-pill" id="myCountBadge">0</span>
+        </div>
+        <div id="mySubmissionsList" class="entry-list">
+          <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            No entries submitted yet.
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // =====================================================
+    // CONFIGURATION — PASTE YOUR SUPABASE CREDENTIALS HERE
+    // =====================================================
+    const SUPABASE_URL = 'https://wtgfpumoeamdarskfvuj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0Z2ZwdW1vZWFtZGFyc2tmdnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NjIwOTIsImV4cCI6MjA5OTIzODA5Mn0.Kn0KR9DACpEhj7svS1B_F4_3GGWS4xLEovB4nSOlRko';
+    const STORAGE_BUCKET = 'submission-photos';
+    const SESSION_KEY = 'fielddesk_agent_session_v1';
+
+    const isConfigured =
+      SUPABASE_URL.startsWith('http') &&
+      !SUPABASE_URL.includes('YOUR_SUPABASE') &&
+      SUPABASE_ANON_KEY.length > 20 &&
+      !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE');
+
+    let db = null;
+    let currentAgent = null;
+    let selectedPhotoFile = null;
+    let mySubmissions = [];
+    let realtimeChannel = null;
+
+    // DOM Elements
+    const configAlert = document.getElementById('configAlert');
+    const globalMessage = document.getElementById('globalMessage');
+    const realtimeDot = document.getElementById('realtimeDot');
+    const realtimeText = document.getElementById('realtimeText');
+
+    const loginSection = document.getElementById('loginSection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const loginForm = document.getElementById('loginForm');
+    const agentNameInput = document.getElementById('agentNameInput');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const activeAgentName = document.getElementById('activeAgentName');
+
+    const submissionForm = document.getElementById('submissionForm');
+    const phoneInput = document.getElementById('phoneInput');
+    const commentsInput = document.getElementById('commentsInput');
+    const photoInput = document.getElementById('photoInput');
+    const photoPickerLabel = document.getElementById('photoPickerLabel');
+    const photoPreviewBox = document.getElementById('photoPreviewBox');
+    const photoPreviewImg = document.getElementById('photoPreviewImg');
+    const photoFileName = document.getElementById('photoFileName');
+    const photoFileSize = document.getElementById('photoFileSize');
+    const removePhotoBtn = document.getElementById('removePhotoBtn');
+    const submitEntryBtn = document.getElementById('submitEntryBtn');
+
+    const mySubmissionsList = document.getElementById('mySubmissionsList');
+    const myCountBadge = document.getElementById('myCountBadge');
+
+    // Helpers
+    function showMessage(text, type = 'error') {
+      globalMessage.className = `alert ${type}`;
+      const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill';
+      globalMessage.innerHTML = `<i class="bi ${icon}"></i><div>${escapeHtml(text)}</div>`;
+      globalMessage.classList.remove('hidden');
+      if (type === 'success') {
+        setTimeout(() => globalMessage.classList.add('hidden'), 4000);
+      }
+    }
+
+    function clearMessage() {
+      globalMessage.classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeLikePattern(str) {
+      return str.replace(/[%_\\]/g, '\\$&');
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    function formatTime(iso) {
+      const d = new Date(iso);
+      return d.toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function setRealtimeStatus(state) {
+      realtimeDot.className = 'dot';
+      if (state === 'SUBSCRIBED') {
+        realtimeDot.classList.add('live');
+        realtimeText.textContent = 'Live';
+      } else if (state === 'CHANNEL_ERROR' || state === 'TIMED_OUT' || state === 'CLOSED') {
+        realtimeDot.classList.add('error');
+        realtimeText.textContent = 'Offline';
+      } else {
+        realtimeText.textContent = 'Connecting';
+      }
+    }
+
+    // Compress oversized photos (> 1.2 MB) client-side so mobile uploads are fast & reliable
+    async function prepareImageForUpload(file) {
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Selected file must be an image.');
+      }
+      if (file.size > 15 * 1024 * 1024) {
+        throw new Error('Image is too large (max 15 MB).');
+      }
+      // Keep small images or GIFs untouched
+      if (file.size <= 1.2 * 1024 * 1024 || file.type === 'image/gif') {
+        return file;
+      }
+
+      return new Promise((resolve) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          const maxDim = 1600;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                resolve(file);
+                return;
+              }
+              const compressedName = file.name.replace(/\.[^/.]+$/, '') + '.jpg';
+              resolve(new File([blob], compressedName, { type: 'image/jpeg' }));
+            },
+            'image/jpeg',
+            0.82
+          );
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(file); // Fallback to original if browser can't decode (e.g. HEIC)
+        };
+        img.src = objectUrl;
+      });
+    }
+
+    function clearSelectedPhoto() {
+      selectedPhotoFile = null;
+      photoInput.value = '';
+      photoPreviewImg.removeAttribute('src');
+      photoPreviewBox.classList.add('hidden');
+      photoPickerLabel.classList.remove('hidden');
+    }
+
+    photoInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showMessage('Please select a valid image file.', 'error');
+        clearSelectedPhoto();
+        return;
+      }
+      if (file.size > 15 * 1024 * 1024) {
+        showMessage('Image exceeds 15 MB limit.', 'error');
+        clearSelectedPhoto();
+        return;
+      }
+      selectedPhotoFile = file;
+      photoFileName.textContent = file.name;
+      photoFileSize.textContent = formatBytes(file.size);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        photoPreviewImg.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+      photoPickerLabel.classList.add('hidden');
+      photoPreviewBox.classList.remove('hidden');
+      clearMessage();
+    });
+
+    removePhotoBtn.addEventListener('click', clearSelectedPhoto);
+
+    // Render agent's own recent submissions
+    function renderMySubmissions() {
+      myCountBadge.textContent = String(mySubmissions.length);
+      if (mySubmissions.length === 0) {
+        mySubmissionsList.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            No entries submitted yet.
+          </div>`;
+        return;
+      }
+
+      mySubmissionsList.innerHTML = mySubmissions
+        .map((item) => {
+          const thumbHtml = item.photo_url
+            ? `<a href="${escapeHtml(item.photo_url)}" target="_blank" rel="noopener noreferrer" title="View photo">
+                 <img class="entry-thumb" src="${escapeHtml(item.photo_url)}" alt="Attachment" loading="lazy" />
+               </a>`
+            : '';
+
+          return `
+            <div class="entry-item">
+              <div class="entry-main">
+                <div class="entry-phone">
+                  <i class="bi bi-telephone-fill"></i>
+                  <span>${escapeHtml(item.phone)}</span>
+                </div>
+                <div class="entry-comment">${escapeHtml(item.comments)}</div>
+                <div class="entry-time">${escapeHtml(formatTime(item.created_at))}</div>
+              </div>
+              ${thumbHtml}
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    async function loadMySubmissions() {
+      if (!db || !currentAgent) return;
+      const { data, error } = await db
+        .from('submissions')
+        .select('*')
+        .eq('agent_id', currentAgent.id)
+        .order('created_at', { ascending: false })
+        .limit(25);
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+      mySubmissions = data || [];
+      renderMySubmissions();
+    }
+
+    function subscribeRealtime() {
+      if (!db) return;
+      if (realtimeChannel) {
+        db.removeChannel(realtimeChannel);
+      }
+
+      realtimeChannel = db
+        .channel('agent-portal-realtime')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'agents' },
+          (payload) => {
+            if (!currentAgent) return;
+            if (payload.eventType === 'DELETE' && payload.old?.id === currentAgent.id) {
+              signOut('Your agent profile was removed by an administrator.');
+            } else if (payload.eventType === 'UPDATE' && payload.new?.id === currentAgent.id) {
+              if (!payload.new.is_active) {
+                signOut('Your agent account was disabled by an administrator.');
+              } else {
+                currentAgent = payload.new;
+                activeAgentName.textContent = currentAgent.name;
+                localStorage.setItem(SESSION_KEY, JSON.stringify(currentAgent));
+              }
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'submissions' },
+          (payload) => {
+            if (!currentAgent) return;
+            if (payload.eventType === 'INSERT' && payload.new.agent_id === currentAgent.id) {
+              const exists = mySubmissions.some((s) => s.id === payload.new.id);
+              if (!exists) {
+                mySubmissions.unshift(payload.new);
+                mySubmissions = mySubmissions.slice(0, 25);
+                renderMySubmissions();
+              }
+            } else if (payload.eventType === 'DELETE') {
+              mySubmissions = mySubmissions.filter((s) => s.id !== payload.old?.id);
+              renderMySubmissions();
+            }
+          }
+        )
+        .subscribe((status) => {
+          setRealtimeStatus(status);
+        });
+    }
+
+    function enterWorkspace(agent) {
+      currentAgent = agent;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(agent));
+      activeAgentName.textContent = agent.name;
+      loginSection.classList.add('hidden');
+      workspaceSection.classList.remove('hidden');
+      loadMySubmissions();
+    }
+
+    function signOut(noticeText = '') {
+      currentAgent = null;
+      mySubmissions = [];
+      localStorage.removeItem(SESSION_KEY);
+      submissionForm.reset();
+      clearSelectedPhoto();
+      workspaceSection.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+      renderMySubmissions();
+      if (noticeText) {
+        showMessage(noticeText, 'error');
+      }
+    }
+
+    async function verifyAndLoginByName(rawName) {
+      const cleanName = rawName.trim();
+      if (cleanName.length < 2) {
+        showMessage('Please enter your agent name.', 'error');
+        return;
+      }
+
+      const { data, error } = await db
+        .from('agents')
+        .select('*')
+        .ilike('name', escapeLikePattern(cleanName))
+        .limit(1);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const matched = data?.[0];
+      if (!matched) {
+        throw new Error('Agent not found. Ask your admin to create your user in Admin.');
+      }
+      if (!matched.is_active) {
+        throw new Error('Your agent account is currently disabled by admin.');
+      }
+
+      clearMessage();
+      enterWorkspace(matched);
+    }
+
+    // Login Submit
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!db) return;
+      clearMessage();
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Checking...';
+
+      try {
+        await verifyAndLoginByName(agentNameInput.value);
+        agentNameInput.value = '';
+      } catch (err) {
+        showMessage(err.message || 'Sign in failed.', 'error');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Sign In';
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      clearMessage();
+      signOut();
+    });
+
+    // Entry Submit
+    submissionForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!db || !currentAgent) return;
+      clearMessage();
+
+      const phone = phoneInput.value.trim();
+      const comments = commentsInput.value.trim();
+
+      const digitsOnly = phone.replace(/\D/g, '');
+      if (digitsOnly.length < 7) {
+        showMessage('Please enter a valid phone number (at least 7 digits).', 'error');
+        phoneInput.focus();
+        return;
+      }
+
+      if (!comments) {
+        showMessage('Please enter comments for this entry.', 'error');
+        commentsInput.focus();
+        return;
+      }
+
+      submitEntryBtn.disabled = true;
+      submitEntryBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Submitting...';
+
+      let uploadedPath = null;
+      let publicPhotoUrl = null;
+
+      try {
+        // Re-verify agent is still active before insert
+        const { data: agentCheck, error: checkErr } = await db
+          .from('agents')
+          .select('id, name, is_active')
+          .eq('id', currentAgent.id)
+          .maybeSingle();
+
+        if (checkErr) throw new Error(checkErr.message);
+        if (!agentCheck || !agentCheck.is_active) {
+          signOut('Your agent account is no longer active.');
+          return;
+        }
+
+        // Upload photo if attached
+        if (selectedPhotoFile) {
+          submitEntryBtn.innerHTML = '<i class="bi bi-cloud-upload"></i> Uploading Photo...';
+          const fileToUpload = await prepareImageForUpload(selectedPhotoFile);
+          const ext = (fileToUpload.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+          uploadedPath = `${currentAgent.id}/${uniqueSuffix}.${ext || 'jpg'}`;
+
+          const { error: uploadError } = await db.storage
+            .from(STORAGE_BUCKET)
+            .upload(uploadedPath, fileToUpload, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: fileToUpload.type || 'image/jpeg'
+            });
+
+          if (uploadError) {
+            throw new Error(`Photo upload failed: ${uploadError.message}`);
+          }
+
+          const { data: urlData } = db.storage
+            .from(STORAGE_BUCKET)
+            .getPublicUrl(uploadedPath);
+
+          publicPhotoUrl = urlData?.publicUrl || null;
+        }
+
+        // Insert record
+        submitEntryBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Saving...';
+        const { data: inserted, error: insertError } = await db
+          .from('submissions')
+          .insert({
+            agent_id: agentCheck.id,
+            agent_name: agentCheck.name,
+            phone,
+            comments,
+            photo_url: publicPhotoUrl,
+            photo_path: uploadedPath
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          // Clean up orphaned photo if DB insert fails
+          if (uploadedPath) {
+            await db.storage.from(STORAGE_BUCKET).remove([uploadedPath]);
+          }
+          throw new Error(insertError.message);
+        }
+
+        // Optimistically add if realtime hasn't arrived yet
+        if (inserted && !mySubmissions.some((s) => s.id === inserted.id)) {
+          mySubmissions.unshift(inserted);
+          mySubmissions = mySubmissions.slice(0, 25);
+          renderMySubmissions();
+        }
+
+        submissionForm.reset();
+        clearSelectedPhoto();
+        showMessage('Entry submitted in real time.', 'success');
+      } catch (err) {
+        showMessage(err.message || 'Submission failed.', 'error');
+      } finally {
+        submitEntryBtn.disabled = false;
+        submitEntryBtn.innerHTML = '<i class="bi bi-send-fill"></i> Submit Entry';
+      }
+    });
+
+    // Boot
+    (async function init() {
+      if (!isConfigured) {
+        configAlert.classList.remove('hidden');
+        setRealtimeStatus('CHANNEL_ERROR');
+        loginBtn.disabled = true;
+        return;
+      }
+
+      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      subscribeRealtime();
+
+      // Restore previous session if valid
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed?.id) {
+            const { data } = await db
+              .from('agents')
+              .select('*')
+              .eq('id', parsed.id)
+              .maybeSingle();
+
+            if (data && data.is_active) {
+              enterWorkspace(data);
+            } else {
+              localStorage.removeItem(SESSION_KEY);
+            }
+          }
+        } catch {
+          localStorage.removeItem(SESSION_KEY);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
