@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FieldDesk — Admin Console</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --surface: #121216;
+      --surface-2: #18181d;
+      --surface-3: #1f1f26;
+      --border: #26262e;
+      --border-hover: #3a3a46;
+      --orange: #ff6b00;
+      --orange-hover: #ff7f1f;
+      --orange-dim: rgba(255, 107, 0, 0.14);
+      --orange-border: rgba(255, 107, 0, 0.38);
+      --text: #f4f4f5;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.14);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.14);
+      --radius: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Header */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.08rem;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--orange);
+      color: #000;
+      display: grid;
+      place-items: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    .brand-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--orange-dim);
+      color: var(--orange);
+      border: 1px solid var(--orange-border);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+
+    .dot.live { background: var(--green); box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); }
+    .dot.error { background: var(--red); }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .stat-label i {
+      color: var(--orange);
+      font-size: 0.95rem;
+    }
+
+    .stat-value {
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: inline-flex;
+      gap: 6px;
+      padding: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .tab-btn.active {
+      background: var(--orange);
+      color: #000;
+    }
+
+    .tab-badge {
+      font-size: 0.75rem;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .tab-btn.active .tab-badge {
+      background: rgba(0, 0, 0, 0.2);
+      color: #000;
+    }
+
+    /* Cards & Controls */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1 1 240px;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-wrap > i {
+      position: absolute;
+      left: 12px;
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    input[type="text"],
+    select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 16px;
+      min-height: 42px;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding-left: 36px;
+    }
+
+    select {
+      min-width: 160px;
+      cursor: pointer;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--orange);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 42px;
+      padding: 8px 15px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--orange);
+      color: #000;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--orange-hover);
+    }
+
+    .btn-ghost {
+      background: var(--surface-2);
+      color: var(--text);
+      border-color: var(--border);
+      min-height: 38px;
+      padding: 6px 12px;
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      border-color: var(--border-hover);
+    }
+
+    .btn-danger {
+      background: var(--red-dim);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.32);
+      min-height: 34px;
+      padding: 5px 10px;
+      font-size: 0.82rem;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    /* Alert */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+      border: 1px solid var(--orange-border);
+      background: var(--orange-dim);
+      color: #ffd8bd;
+    }
+
+    .alert.error {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: var(--red-dim);
+      color: #fecaca;
+    }
+
+    .alert.success {
+      border-color: rgba(34, 197, 94, 0.4);
+      background: var(--green-dim);
+      color: #bbf7d0;
+    }
+
+    /* Desktop Submissions Table */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    thead th {
+      background: var(--surface-2);
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    tr.flash-new {
+      animation: rowFlash 2s ease-out;
+    }
+
+    @keyframes rowFlash {
+      0% { background: rgba(255, 107, 0, 0.24); }
+      100% { background: transparent; }
+    }
+
+    .agent-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 0.84rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .agent-pill i {
+      color: var(--orange);
+    }
+
+    .phone-link {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--orange);
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .phone-link:hover {
+      text-decoration: underline;
+    }
+
+    .comment-cell {
+      max-width: 380px;
+      word-break: break-word;
+      color: var(--text);
+    }
+
+    .time-cell {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .thumb-btn {
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      cursor: pointer;
+      display: inline-block;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+
+    .thumb-btn:hover {
+      border-color: var(--orange);
+      transform: scale(1.04);
+    }
+
+    .thumb-btn img {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Mobile Submission Cards (hidden on desktop) */
+    .mobile-cards {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .m-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+    }
+
+    .m-card.flash-new {
+      animation: rowFlash 2s ease-out;
+    }
+
+    .m-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .m-card-body {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .m-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Agents Management */
+    .create-agent-form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .create-agent-form input {
+      flex: 1 1 240px;
+    }
+
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .agent-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .agent-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .agent-name {
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      word-break: break-word;
+    }
+
+    .badge-status {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .badge-active {
+      background: var(--green-dim);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .badge-disabled {
+      background: var(--red-dim);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .agent-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .agent-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    /* Lightbox Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.86);
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-width: 780px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-img-wrap {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-height: 75vh;
+      overflow: auto;
+    }
+
+    .modal-img-wrap img {
+      max-width: 100%;
+      max-height: 75vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--text-dim);
+      font-size: 0.92rem;
+    }
+
+    .empty-state i {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 8px;
+      color: var(--border-hover);
+    }
+
+    .hidden { display: none !important; }
+
+    .spin { animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 860px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 720px) {
+      .table-wrap { display: none; }
+      .mobile-cards { display: flex; }
+      .container { padding: 12px; }
+      .card { padding: 14px; }
+      .tabs { width: 100%; }
+      .tab-btn { flex: 1; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon"><i class="bi bi-speedometer2"></i></div>
+        <span>FieldDesk</span>
+        <span class="brand-tag">Admin</span>
+      </div>
+      <div class="topbar-right">
+        <span class="status-pill">
+          <span class="dot" id="realtimeDot"></span>
+          <span id="realtimeText">Connecting</span>
+        </span>
+        <a href="index.html" class="btn btn-ghost">
+          <i class="bi bi-box-arrow-up-right"></i> Agent Portal
+        </a>
+      </div>
+    </header>
+
+    <div id="configAlert" class="alert hidden">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <div>
+        <strong>Supabase not configured.</strong> Set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> in the script at the bottom of <code>admin.html</code>.
+      </div>
+    </div>
+
+    <div id="globalMessage" class="alert hidden"></div>
+
+    <!-- SUMMARY STATS -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label"><span>Total Entries</span><i class="bi bi-journal-text"></i></div>
+        <div class="stat-value" id="statTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span>Today</span><i class="bi bi-calendar-check"></i></div>
+        <div class="stat-value" id="statToday">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span>Active Agents</span><i class="bi bi-people"></i></div>
+        <div class="stat-value" id="statAgents">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span>With Photos</span><i class="bi bi-image"></i></div>
+        <div class="stat-value" id="statPhotos">0</div>
+      </div>
+    </section>
+
+    <!-- NAVIGATION TABS -->
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab-btn active" data-tab="submissions">
+        <i class="bi bi-activity"></i> Live Feed
+        <span class="tab-badge" id="tabSubCount">0</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="agents">
+        <i class="bi bi-person-plus"></i> Agents
+        <span class="tab-badge" id="tabAgentCount">0</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: SUBMISSIONS -->
+    <section id="submissionsPanel" class="card">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <i class="bi bi-search"></i>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by agent, phone, or comment..."
+          />
+        </div>
+
+        <select id="agentFilterSelect" aria-label="Filter by agent">
+          <option value="ALL">All Agents</option>
+        </select>
+
+        <button type="button" id="photoFilterBtn" class="btn btn-ghost">
+          <i class="bi bi-image"></i> Photos Only
+        </button>
+
+        <button type="button" id="exportCsvBtn" class="btn btn-ghost">
+          <i class="bi bi-download"></i> Export CSV
+        </button>
+      </div>
+
+      <!-- Desktop Table -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Agent</th>
+              <th>Phone</th>
+              <th>Comments</th>
+              <th>Photo</th>
+              <th>Time</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="submissionsTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards -->
+      <div id="submissionsMobileList" class="mobile-cards"></div>
+
+      <div id="submissionsEmpty" class="empty-state hidden">
+        <i class="bi bi-inbox"></i>
+        No submissions match your current filter.
+      </div>
+    </section>
+
+    <!-- TAB 2: AGENTS -->
+    <section id="agentsPanel" class="card hidden">
+      <form id="createAgentForm" class="create-agent-form" novalidate>
+        <input
+          type="text"
+          id="newAgentNameInput"
+          placeholder="Enter new agent name (e.g. Rahul Sharma)"
+          required
+        />
+        <button type="submit" id="createAgentBtn" class="btn btn-primary">
+          <i class="bi bi-person-plus-fill"></i> Create Agent
+        </button>
+      </form>
+
+      <div id="agentsGrid" class="agent-grid"></div>
+
+      <div id="agentsEmpty" class="empty-state hidden">
+        <i class="bi bi-people"></i>
+        No agents created yet. Add one above so they can sign in on the Agent Portal.
+      </div>
+    </section>
+  </div>
+
+  <!-- PHOTO LIGHTBOX MODAL -->
+  <div id="photoModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-head">
+        <strong id="modalTitle">Photo Attachment</strong>
+        <div style="display:flex; gap:8px;">
+          <a id="modalOpenOriginal" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+            <i class="bi bi-box-arrow-up-right"></i> Open Full
+          </a>
+          <button type="button" id="closeModalBtn" class="btn btn-ghost">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+      <div class="modal-img-wrap">
+        <img id="modalImg" alt="Submission attachment" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================
+    // CONFIGURATION — PASTE YOUR SUPABASE CREDENTIALS HERE
+    // =====================================================
+    const SUPABASE_URL = 'https://wtgfpumoeamdarskfvuj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0Z2ZwdW1vZWFtZGFyc2tmdnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NjIwOTIsImV4cCI6MjA5OTIzODA5Mn0.Kn0KR9DACpEhj7svS1B_F4_3GGWS4xLEovB4nSOlRko';
+    const STORAGE_BUCKET = 'submission-photos';
+
+    const isConfigured =
+      SUPABASE_URL.startsWith('http') &&
+      !SUPABASE_URL.includes('YOUR_SUPABASE') &&
+      SUPABASE_ANON_KEY.length > 20 &&
+      !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE');
+
+    let db = null;
+    let agents = [];
+    let submissions = [];
+    let newlyArrivedIds = new Set();
+    let onlyWithPhotos = false;
+
+    // DOM Elements
+    const configAlert = document.getElementById('configAlert');
+    const globalMessage = document.getElementById('globalMessage');
+    const realtimeDot = document.getElementById('realtimeDot');
+    const realtimeText = document.getElementById('realtimeText');
+
+    const statTotal = document.getElementById('statTotal');
+    const statToday = document.getElementById('statToday');
+    const statAgents = document.getElementById('statAgents');
+    const statPhotos = document.getElementById('statPhotos');
+
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabSubCount = document.getElementById('tabSubCount');
+    const tabAgentCount = document.getElementById('tabAgentCount');
+    const submissionsPanel = document.getElementById('submissionsPanel');
+    const agentsPanel = document.getElementById('agentsPanel');
+
+    const searchInput = document.getElementById('searchInput');
+    const agentFilterSelect = document.getElementById('agentFilterSelect');
+    const photoFilterBtn = document.getElementById('photoFilterBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const submissionsTableBody = document.getElementById('submissionsTableBody');
+    const submissionsMobileList = document.getElementById('submissionsMobileList');
+    const submissionsEmpty = document.getElementById('submissionsEmpty');
+
+    const createAgentForm = document.getElementById('createAgentForm');
+    const newAgentNameInput = document.getElementById('newAgentNameInput');
+    const createAgentBtn = document.getElementById('createAgentBtn');
+    const agentsGrid = document.getElementById('agentsGrid');
+    const agentsEmpty = document.getElementById('agentsEmpty');
+
+    const photoModal = document.getElementById('photoModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalOpenOriginal = document.getElementById('modalOpenOriginal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function showMessage(text, type = 'error') {
+      globalMessage.className = `alert ${type}`;
+      const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill';
+      globalMessage.innerHTML = `<i class="bi ${icon}"></i><div>${escapeHtml(text)}</div>`;
+      globalMessage.classList.remove('hidden');
+      if (type === 'success') {
+        setTimeout(() => globalMessage.classList.add('hidden'), 3500);
+      }
+    }
+
+    function formatTime(iso) {
+      return new Date(iso).toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function isToday(iso) {
+      const d = new Date(iso);
+      const now = new Date();
+      return (
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth() &&
+        d.getDate() === now.getDate()
+      );
+    }
+
+    function setRealtimeStatus(state) {
+      realtimeDot.className = 'dot';
+      if (state === 'SUBSCRIBED') {
+        realtimeDot.classList.add('live');
+        realtimeText.textContent = 'Live';
+      } else if (state === 'CHANNEL_ERROR' || state === 'TIMED_OUT' || state === 'CLOSED') {
+        realtimeDot.classList.add('error');
+        realtimeText.textContent = 'Offline';
+      } else {
+        realtimeText.textContent = 'Connecting';
+      }
+    }
+
+    // Tabs
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.dataset.tab;
+        submissionsPanel.classList.toggle('hidden', target !== 'submissions');
+        agentsPanel.classList.toggle('hidden', target !== 'agents');
+      });
+    });
+
+    function updateStats() {
+      statTotal.textContent = String(submissions.length);
+      statToday.textContent = String(submissions.filter((s) => isToday(s.created_at)).length);
+      statAgents.textContent = String(agents.filter((a) => a.is_active).length);
+      statPhotos.textContent = String(submissions.filter((s) => Boolean(s.photo_url)).length);
+      tabSubCount.textContent = String(submissions.length);
+      tabAgentCount.textContent = String(agents.length);
+    }
+
+    function populateAgentFilter() {
+      const previous = agentFilterSelect.value;
+      const names = new Set(agents.map((a) => a.name));
+      submissions.forEach((s) => {
+        if (s.agent_name) names.add(s.agent_name);
+      });
+
+      const sorted = Array.from(names).sort((a, b) => a.localeCompare(b));
+      agentFilterSelect.innerHTML = `<option value="ALL">All Agents</option>` +
+        sorted.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+
+      if (sorted.includes(previous)) {
+        agentFilterSelect.value = previous;
+      }
+    }
+
+    function getFilteredSubmissions() {
+      const q = searchInput.value.trim().toLowerCase();
+      const selectedAgent = agentFilterSelect.value;
+
+      return submissions.filter((s) => {
+        if (selectedAgent !== 'ALL' && s.agent_name !== selectedAgent) return false;
+        if (onlyWithPhotos && !s.photo_url) return false;
+        if (q) {
+          const hay = `${s.agent_name} ${s.phone} ${s.comments}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderSubmissions() {
+      const list = getFilteredSubmissions();
+      const empty = list.length === 0;
+      submissionsEmpty.classList.toggle('hidden', !empty);
+
+      if (empty) {
+        submissionsTableBody.innerHTML = '';
+        submissionsMobileList.innerHTML = '';
+        return;
+      }
+
+      // Desktop rows
+      submissionsTableBody.innerHTML = list
+        .map((s) => {
+          const flash = newlyArrivedIds.has(s.id) ? 'flash-new' : '';
+          const photoHtml = s.photo_url
+            ? `<button type="button" class="thumb-btn" data-photo="${escapeHtml(s.photo_url)}" data-agent="${escapeHtml(s.agent_name)}" title="View attachment">
+                 <img src="${escapeHtml(s.photo_url)}" alt="Attachment" loading="lazy" />
+               </button>`
+            : `<span style="color:var(--text-dim); font-size:0.82rem;">—</span>`;
+
+          return `
+            <tr class="${flash}">
+              <td>
+                <span class="agent-pill">
+                  <i class="bi bi-person-fill"></i>
+                  ${escapeHtml(s.agent_name)}
+                </span>
+              </td>
+              <td>
+                <a class="phone-link" href="tel:${escapeHtml(s.phone)}">${escapeHtml(s.phone)}</a>
+              </td>
+              <td class="comment-cell">${escapeHtml(s.comments)}</td>
+              <td>${photoHtml}</td>
+              <td class="time-cell">${escapeHtml(formatTime(s.created_at))}</td>
+              <td>
+                <button type="button" class="btn btn-danger delete-sub-btn" data-id="${escapeHtml(s.id)}" title="Delete entry">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      // Mobile cards
+      submissionsMobileList.innerHTML = list
+        .map((s) => {
+          const flash = newlyArrivedIds.has(s.id) ? 'flash-new' : '';
+          const photoHtml = s.photo_url
+            ? `<button type="button" class="thumb-btn" data-photo="${escapeHtml(s.photo_url)}" data-agent="${escapeHtml(s.agent_name)}">
+                 <img src="${escapeHtml(s.photo_url)}" alt="Attachment" loading="lazy" />
+               </button>`
+            : '';
+
+          return `
+            <div class="m-card ${flash}">
+              <div class="m-card-top">
+                <span class="agent-pill">
+                  <i class="bi bi-person-fill"></i>
+                  ${escapeHtml(s.agent_name)}
+                </span>
+                <span class="time-cell">${escapeHtml(formatTime(s.created_at))}</span>
+              </div>
+              <div class="m-card-body">
+                <div style="min-width:0; flex:1;">
+                  <a class="phone-link" href="tel:${escapeHtml(s.phone)}">${escapeHtml(s.phone)}</a>
+                  <div class="comment-cell" style="margin-top:6px;">${escapeHtml(s.comments)}</div>
+                </div>
+                ${photoHtml}
+              </div>
+              <div class="m-card-footer">
+                <span style="font-size:0.78rem; color:var(--text-dim);">
+                  ${s.photo_url ? '<i class="bi bi-paperclip"></i> Photo attached' : 'No attachment'}
+                </span>
+                <button type="button" class="btn btn-danger delete-sub-btn" data-id="${escapeHtml(s.id)}">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    function renderAgents() {
+      const empty = agents.length === 0;
+      agentsEmpty.classList.toggle('hidden', !empty);
+
+      if (empty) {
+        agentsGrid.innerHTML = '';
+        return;
+      }
+
+      // Count submissions per agent
+      const counts = {};
+      submissions.forEach((s) => {
+        if (s.agent_id) {
+          counts[s.agent_id] = (counts[s.agent_id] || 0) + 1;
+        }
+      });
+
+      agentsGrid.innerHTML = agents
+        .map((a) => {
+          const badgeClass = a.is_active ? 'badge-active' : 'badge-disabled';
+          const badgeLabel = a.is_active ? 'Active' : 'Disabled';
+          const toggleLabel = a.is_active ? 'Disable' : 'Enable';
+          const entryCount = counts[a.id] || 0;
+
+          return `
+            <div class="agent-card">
+              <div class="agent-card-top">
+                <div class="agent-name">
+                  <i class="bi bi-person-badge" style="color:var(--orange);"></i>
+                  <span>${escapeHtml(a.name)}</span>
+                </div>
+                <span class="badge-status ${badgeClass}">${badgeLabel}</span>
+              </div>
+              <div class="agent-meta">
+                <span>${entryCount} ${entryCount === 1 ? 'entry' : 'entries'}</span>
+                <span>Created ${escapeHtml(formatTime(a.created_at))}</span>
+              </div>
+              <div class="agent-actions">
+                <button type="button" class="btn btn-ghost toggle-agent-btn" data-id="${escapeHtml(a.id)}" data-active="${a.is_active}">
+                  <i class="bi ${a.is_active ? 'bi-pause-circle' : 'bi-play-circle'}"></i> ${toggleLabel}
+                </button>
+                <button type="button" class="btn btn-danger delete-agent-btn" data-id="${escapeHtml(a.id)}" data-name="${escapeHtml(a.name)}">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    // Event delegation for thumbnails & delete submission
+    document.addEventListener('click', async (e) => {
+      const thumbBtn = e.target.closest('.thumb-btn');
+      if (thumbBtn) {
+        const url = thumbBtn.dataset.photo;
+        const agent = thumbBtn.dataset.agent;
+        modalImg.src = url;
+        modalOpenOriginal.href = url;
+        modalTitle.textContent = `Attachment — ${agent}`;
+        photoModal.classList.remove('hidden');
+        return;
+      }
+
+      const delSubBtn = e.target.closest('.delete-sub-btn');
+      if (delSubBtn && db) {
+        const id = delSubBtn.dataset.id;
+        const target = submissions.find((s) => s.id === id);
+        if (!target) return;
+        if (!confirm(`Delete entry for ${target.phone}?`)) return;
+
+        delSubBtn.disabled = true;
+        try {
+          if (target.photo_path) {
+            await db.storage.from(STORAGE_BUCKET).remove([target.photo_path]);
+          }
+          const { error } = await db.from('submissions').delete().eq('id', id);
+          if (error) throw new Error(error.message);
+
+          submissions = submissions.filter((s) => s.id !== id);
+          updateStats();
+          renderSubmissions();
+          renderAgents();
+        } catch (err) {
+          showMessage(err.message || 'Failed to delete entry.', 'error');
+          delSubBtn.disabled = false;
+        }
+        return;
+      }
+
+      const toggleBtn = e.target.closest('.toggle-agent-btn');
+      if (toggleBtn && db) {
+        const id = toggleBtn.dataset.id;
+        const nextActive = toggleBtn.dataset.active !== 'true';
+        toggleBtn.disabled = true;
+        const { error } = await db
+          .from('agents')
+          .update({ is_active: nextActive })
+          .eq('id', id);
+        if (error) {
+          showMessage(error.message, 'error');
+          toggleBtn.disabled = false;
+        }
+        return;
+      }
+
+      const delAgentBtn = e.target.closest('.delete-agent-btn');
+      if (delAgentBtn && db) {
+        const id = delAgentBtn.dataset.id;
+        const name = delAgentBtn.dataset.name;
+        if (!confirm(`Remove agent "${name}"? Their past submissions will remain.`)) return;
+
+        delAgentBtn.disabled = true;
+        const { error } = await db.from('agents').delete().eq('id', id);
+        if (error) {
+          showMessage(error.message, 'error');
+          delAgentBtn.disabled = false;
+        }
+      }
+    });
+
+    // Modal controls
+    closeModalBtn.addEventListener('click', () => photoModal.classList.add('hidden'));
+    photoModal.addEventListener('click', (e) => {
+      if (e.target === photoModal) photoModal.classList.add('hidden');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') photoModal.classList.add('hidden');
+    });
+
+    // Filters
+    searchInput.addEventListener('input', renderSubmissions);
+    agentFilterSelect.addEventListener('change', renderSubmissions);
+    photoFilterBtn.addEventListener('click', () => {
+      onlyWithPhotos = !onlyWithPhotos;
+      photoFilterBtn.style.borderColor = onlyWithPhotos ? 'var(--orange)' : 'var(--border)';
+      photoFilterBtn.style.color = onlyWithPhotos ? 'var(--orange)' : 'var(--text)';
+      renderSubmissions();
+    });
+
+    // Export CSV
+    exportCsvBtn.addEventListener('click', () => {
+      const rows = getFilteredSubmissions();
+      if (rows.length === 0) {
+        showMessage('No entries to export.', 'error');
+        return;
+      }
+      const csvEscape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const header = ['Agent', 'Phone', 'Comments', 'Photo URL', 'Created At'];
+      const lines = [
+        header.join(','),
+        ...rows.map((r) =>
+          [r.agent_name, r.phone, r.comments, r.photo_url || '', r.created_at]
+            .map(csvEscape)
+            .join(',')
+        )
+      ];
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fielddesk-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Create Agent
+    createAgentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!db) return;
+
+      const name = newAgentNameInput.value.trim();
+      if (name.length < 2) {
+        showMessage('Agent name must be at least 2 characters.', 'error');
+        return;
+      }
+
+      createAgentBtn.disabled = true;
+      createAgentBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Creating...';
+
+      try {
+        const { data, error } = await db
+          .from('agents')
+          .insert({ name, is_active: true })
+          .select()
+          .single();
+
+        if (error) {
+          if (error.code === '23505') {
+            throw new Error(`Agent "${name}" already exists.`);
+          }
+          throw new Error(error.message);
+        }
+
+        if (data && !agents.some((a) => a.id === data.id)) {
+          agents.unshift(data);
+          updateStats();
+          populateAgentFilter();
+          renderAgents();
+        }
+        newAgentNameInput.value = '';
+        showMessage(`Agent "${name}" created.`, 'success');
+      } catch (err) {
+        showMessage(err.message || 'Could not create agent.', 'error');
+      } finally {
+        createAgentBtn.disabled = false;
+        createAgentBtn.innerHTML = '<i class="bi bi-person-plus-fill"></i> Create Agent';
+      }
+    });
+
+    // Initial Load & Realtime
+    async function loadInitialData() {
+      const [agentsRes, subsRes] = await Promise.all([
+        db.from('agents').select('*').order('created_at', { ascending: false }),
+        db.from('submissions').select('*').order('created_at', { ascending: false }).limit(500)
+      ]);
+
+      if (agentsRes.error) showMessage(agentsRes.error.message, 'error');
+      if (subsRes.error) showMessage(subsRes.error.message, 'error');
+
+      agents = agentsRes.data || [];
+      submissions = subsRes.data || [];
+      updateStats();
+      populateAgentFilter();
+      renderSubmissions();
+      renderAgents();
+    }
+
+    function subscribeRealtime() {
+      db.channel('admin-console-realtime')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'submissions' },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              if (!submissions.some((s) => s.id === payload.new.id)) {
+                submissions.unshift(payload.new);
+                newlyArrivedIds.add(payload.new.id);
+                setTimeout(() => newlyArrivedIds.delete(payload.new.id), 2500);
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              submissions = submissions.map((s) => (s.id === payload.new.id ? payload.new : s));
+            } else if (payload.eventType === 'DELETE') {
+              submissions = submissions.filter((s) => s.id !== payload.old?.id);
+            }
+            updateStats();
+            populateAgentFilter();
+            renderSubmissions();
+            renderAgents();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'agents' },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              if (!agents.some((a) => a.id === payload.new.id)) {
+                agents.unshift(payload.new);
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              agents = agents.map((a) => (a.id === payload.new.id ? payload.new : a));
+            } else if (payload.eventType === 'DELETE') {
+              agents = agents.filter((a) => a.id !== payload.old?.id);
+            }
+            updateStats();
+            populateAgentFilter();
+            renderAgents();
+          }
+        )
+        .subscribe((status) => {
+          setRealtimeStatus(status);
+        });
+    }
+
+    (async function init() {
+      if (!isConfigured) {
+        configAlert.classList.remove('hidden');
+        setRealtimeStatus('CHANNEL_ERROR');
+        createAgentBtn.disabled = true;
+        return;
+      }
+
+      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      await loadInitialData();
+      subscribeRealtime();
+    })();
+  </script>
+</body>
+</html>
