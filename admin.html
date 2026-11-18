@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FieldDesk — Admin Console</title>
+  <title>NumberPlanner — Admin Console</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -670,7 +670,7 @@
     <header class="topbar">
       <div class="brand">
         <div class="brand-icon"><i class="bi bi-speedometer2"></i></div>
-        <span>FieldDesk</span>
+        <span>NumberPlanner</span>
         <span class="brand-tag">Admin</span>
       </div>
       <div class="topbar-right">
@@ -1224,7 +1224,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `fielddesk-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `NumberPlanner-export-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     });
